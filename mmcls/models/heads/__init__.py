@@ -11,10 +11,11 @@ from .multi_label_linear_head import MultiLabelLinearClsHead
 from .multi_task_head import MultiTaskHead
 from .stacked_head import StackedLinearClsHead
 from .vision_transformer_head import VisionTransformerClsHead
+from .hierarch_multi_task_head import HierarchMultiTaskHead
 
 __all__ = [
     'ClsHead', 'LinearClsHead', 'StackedLinearClsHead', 'MultiLabelClsHead',
     'MultiLabelLinearClsHead', 'VisionTransformerClsHead', 'DeiTClsHead',
     'ConformerHead', 'EfficientFormerClsHead', 'ArcFaceClsHead', 'CSRAClsHead',
-    'MultiTaskHead'
+    'MultiTaskHead', 'HierarchMultiTaskHead'
 ]

@@ -8,6 +8,7 @@ from .formatting import (Collect, PackClsInputs, PackMultiTaskInputs, ToNumpy,
 from .processing import (Albumentations, ColorJitter, EfficientNetCenterCrop,
                          EfficientNetRandomCrop, Lighting, RandomCrop,
                          RandomErasing, RandomResizedCrop, ResizeEdge)
+from .loading import AIELoadImageFromFile
 
 __all__ = [
     'ToPIL', 'ToNumpy', 'Transpose', 'Collect', 'RandomCrop',
@@ -17,5 +18,5 @@ __all__ = [
     'Cutout', 'RandAugment', 'Lighting', 'ColorJitter', 'RandomErasing',
     'PackClsInputs', 'Albumentations', 'EfficientNetRandomCrop',
     'EfficientNetCenterCrop', 'ResizeEdge', 'BaseAugTransform',
-    'PackMultiTaskInputs'
+    'PackMultiTaskInputs', 'AIELoadImageFromFile'
 ]
