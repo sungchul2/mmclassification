@@ -1,53 +1,74 @@
 import json
 import os
 from collections import defaultdict
-from typing import List, Union
+from typing import Dict, List, Union
 
 import pandas as pd
 from mmcls.datasets import MultiTaskDataset
 from mmcls.registry import DATASETS
 
 
-@DATASETS.register_module()
+@DATASETS.register_module(force=True)
 class HierarchMultiTaskDataset(MultiTaskDataset):
-
-    def __init__(self, seed: Union[int, List[int]], labels_map: str, *args, **kwargs):
+    """"""
+    def __init__(
+            self,
+            seed: Union[int, List[int]] = 1,
+            labels_map: str = './data/labels_map.json',
+            isinference: bool = False,
+            *args,
+            **kwargs
+        ) -> None:
         self.seed = seed
         self._labels_map = json.load(open(labels_map, 'r'))
         self._labels_attr = ['POA_attribution', 'activity_category', 'activity_type']
+        self.isinference = isinference
 
         super().__init__(*args, **kwargs)
 
     def load_data_list(self, ann_file, metainfo_override=None) -> List[dict]:
-        if isinstance(self.seed, (tuple, list)):
-            _data_list = None
-            for seed in self.seed:
-                if _data_list is None:
-                    _data_list = pd.read_csv(os.path.join(ann_file.format(seed)))
-                else:
-                    _next_seed = pd.read_csv(os.path.join(ann_file.format(seed)))
-                    _data_list = pd.concat((_data_list, _next_seed))
+        if self.isinference:
+            # inference
+            assert ann_file.endswith('.csv')
+            _data_list = pd.read_csv(ann_file)
+            _results = []
+            for i in range(len(_data_list)):
+                _item = defaultdict(dict)
+                for k, v in _data_list.iloc[i].items():
+                    if k == 'image_name':
+                        _item['img_path'] = os.path.abspath(os.path.join(self.data_root, v))
+                _results.append(_item)
+            return _results
         else:
-            _data_list = pd.read_csv(os.path.join(ann_file.format(self.seed)))
+            # training
+            if isinstance(self.seed, (tuple, list)):
+                _data_list = None
+                for seed in self.seed:
+                    if _data_list is None:
+                        _data_list = pd.read_csv(ann_file.format(seed))
+                    else:
+                        _next_seed = pd.read_csv(ann_file.format(seed))
+                        _data_list = pd.concat((_data_list, _next_seed))
+            else:
+                _data_list = pd.read_csv(ann_file.format(self.seed))
 
-        for _labels_attr in self._labels_attr:
-            _data_list[_labels_attr] = _data_list[_labels_attr].apply(lambda x: self._labels_map[_labels_attr+'_map'][x])
+            for _labels_attr in self._labels_attr:
+                _data_list[_labels_attr] = _data_list[_labels_attr].apply(lambda x: self._labels_map[_labels_attr+'_map'][x])
 
-        _results = []
-        for i in range(len(_data_list)):
-            _item = defaultdict(dict)
-            _labels = {}
-            for k, v in _data_list.iloc[i].items():
-                if k == 'image_name':
-                    _item['img_path'] = os.path.join(self.data_root, v)
-                elif k in self._labels_attr:
-                    _labels[k] = v
-            _item['gt_label'].update(self.divide_task(_labels))
-            _results.append(_item)
+            _results = []
+            for i in range(len(_data_list)):
+                _item = defaultdict(dict)
+                _labels = {}
+                for k, v in _data_list.iloc[i].items():
+                    if k == 'image_name':
+                        _item['img_path'] = os.path.abspath(os.path.join(self.data_root, v))
+                    elif k in self._labels_attr:
+                        _labels[k] = v
+                _item['gt_label'].update(self.divide_task(_labels))
+                _results.append(_item)
+            return _results
 
-        return _results
-
-    def divide_task(self, labels):
+    def divide_task(self, labels: Dict[str, int]) -> Dict[str, Dict[str, int]]:
         """Temp function to divide original 3 tasks to temp 5 tasks."""
         _results = {}
         if labels[self._labels_attr[2]] == 0:
@@ -87,22 +108,32 @@ class HierarchMultiTaskDataset(MultiTaskDataset):
 
 
 if __name__ == '__main__':
+    # training
     dataset = HierarchMultiTaskDataset(
         seed=1,
         labels_map='./data/labels_map.json',
         ann_file='../samples/ref_id_1_0.5_2/cv_{}.csv',
-        data_root='./data/TRAIN_IMAGES')
-
-    data_list = dataset.load_data_list()
+        data_root='./data/TRAIN_IMAGES'
+    )
     print('seed : int')
-    print('-> data_list :', len(data_list))
+    print('-> dataset :', len(dataset))
 
     dataset = HierarchMultiTaskDataset(
         seed=[1, 2, 3, 4, 5],
         labels_map='./data/labels_map.json',
         ann_file='../samples/ref_id_1_0.5_2/cv_{}.csv',
-        data_root='./data/TRAIN_IMAGES')
-
-    data_list = dataset.load_data_list()
+        data_root='./data/TRAIN_IMAGES'
+    )
     print('seed : list')
-    print('-> data_list :', len(data_list))
+    print('-> dataset :', len(dataset))
+
+    # inference
+    dataset = HierarchMultiTaskDataset(
+        labels_map='./data/labels_map.json',
+        ann_file='TEST_images_metadata.csv',
+        data_root='./data',
+        isinference=True
+    )
+
+    print('-> dataset :', len(dataset))
+    print(dataset.data_list[:5])
