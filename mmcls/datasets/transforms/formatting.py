@@ -291,3 +291,11 @@ class Collect(BaseTransform):
 
     def __repr__(self):
         return self.__class__.__name__ + f'(keys={self.keys})'
+
+
+@TRANSFORMS.register_module()
+class PackMultiTaskInputswithPath(PackMultiTaskInputs):
+    def transform(self, results: dict) -> dict:
+        packed_results = super().transform(results)
+        packed_results['img_path'] = results['img_path']
+        return packed_results
