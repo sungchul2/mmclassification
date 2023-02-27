@@ -5,11 +5,15 @@ import os.path as osp
 from copy import deepcopy
 
 import mmengine
+from mmcls.utils import register_all_modules
 from mmengine.config import Config, ConfigDict, DictAction
 from mmengine.hooks import Hook
 from mmengine.runner import Runner
+from PIL import Image, ImageFile, TiffImagePlugin
 
-from mmcls.utils import register_all_modules
+ImageFile.LOAD_TRUNCATED_IMAGES=True
+TiffImagePlugin.DEBUG = True
+Image.MAX_IMAGE_PIXELS = 933120000
 
 
 def parse_args():
