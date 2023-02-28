@@ -19,10 +19,11 @@ class HierarchMultiTaskDataset(MultiTaskDataset):
             *args,
             **kwargs
         ) -> None:
-        self.seed = seed
-        self._labels_map = json.load(open(labels_map, 'r'))
-        self._labels_attr = ['POA_attribution', 'activity_category', 'activity_type']
         self.isinference = isinference
+        if not self.isinference:
+            self.seed = seed
+            self._labels_map = json.load(open(labels_map, 'r'))
+            self._labels_attr = ['POA_attribution', 'activity_category', 'activity_type']
 
         super().__init__(*args, **kwargs)
 
